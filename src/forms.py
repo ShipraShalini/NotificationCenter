@@ -1,12 +1,11 @@
 from datetime import datetime, timedelta
 
-import pytz
 from django import forms
 
 from src import notification_utils
 from src.constants import ACTIONS
 
-utc = pytz.utc
+
 
 
 class NotificationForm(forms.Form):
@@ -20,10 +19,7 @@ class NotificationForm(forms.Form):
 
     def clean_notification_time(self):
         date = self.cleaned_data['notification_time']
-        print "tzinfo", date.tzinfo
-        one_minute_from_now = utc.localize(datetime.utcnow() + timedelta(minutes=1))
-        if date < one_minute_from_now:
-            raise forms.ValidationError("The notification_time must be 1 min more than current time")
+        notification_utils.is_valid_date(date)
         return date
 
     def schedule_notification(self):
@@ -45,9 +41,8 @@ class ModifyNotificationForm(forms.Form):
 
     def clean_notification_time(self):
         date = self.cleaned_data['notification_time']
-        one_minute_from_now = utc.localize(datetime.utcnow() + timedelta(minutes=1))
-        if date < one_minute_from_now:
-            raise forms.ValidationError("The notification_time must be 1 min more than current time")
+        if date:
+            notification_utils.is_valid_date(date)
         return date
 
     def modify(self):
