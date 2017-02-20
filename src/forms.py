@@ -7,11 +7,11 @@ from src.constants import ACTIONS
 class NotificationForm(forms.Form):
     """ Form for storing notificaiton details """
 
-    query = forms.CharField(max_length=300)
+    user_ids = forms.CharField(max_length=300, label='Query')
     header = forms.CharField(min_length=20, max_length=150)
     content = forms.CharField(min_length=20, max_length=300, widget=forms.Textarea)
     image_url = forms.URLField(widget=forms.URLInput)
-    notification_time = forms.DateTimeField(widget=forms.DateTimeInput, label="UTC datetime")
+    notification_time = forms.DateTimeField(widget=forms.DateTimeInput)
 
     def clean_notification_time(self):
         """
@@ -28,7 +28,7 @@ class NotificationForm(forms.Form):
         :return: job_id
         """
         time = self.cleaned_data.pop('notification_time')
-        user_ids = self.cleaned_data.pop('query')
+        user_ids = self.cleaned_data.pop('user_ids')
         return notification_utils.add_notification(payload=self.cleaned_data, user_ids=user_ids, time=time)
 
 
@@ -37,7 +37,7 @@ class ModifyNotificationForm(forms.Form):
 
     action = forms.ChoiceField(choices=ACTIONS, widget=forms.RadioSelect)
     job_id = forms.CharField()
-    query = forms.CharField(max_length=300, required=False)
+    user_ids = forms.CharField(max_length=300, required=False, label='Query')
     header = forms.CharField(min_length=20, max_length=150, required=False)
     content = forms.CharField(min_length=20, max_length=300, widget=forms.Textarea, required=False)
     image_url = forms.URLField(required=False, widget=forms.URLInput)
