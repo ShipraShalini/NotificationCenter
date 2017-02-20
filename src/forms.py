@@ -4,6 +4,7 @@ import pytz
 from django import forms
 
 from src import notification_utils
+from src.constants import ACTIONS
 
 utc = pytz.utc
 
@@ -17,13 +18,13 @@ class NotificationForm(forms.Form):
     image_url = forms.URLField(widget=forms.URLInput)
     notification_time = forms.DateTimeField(widget=forms.DateTimeInput, initial=datetime.utcnow())
 
-    # def clean_notification_time(self):
-    #     date = self.cleaned_data['notification_time']
-    #     print "tzinfo", date.tzinfo
-    #     one_minute_from_now = utc.localize(datetime.utcnow() + timedelta(minutes=1))
-    #     if date < one_minute_from_now:
-    #         raise forms.ValidationError("The notification_time must be 1 min more than current time")
-    #     return date
+    def clean_notification_time(self):
+        date = self.cleaned_data['notification_time']
+        print "tzinfo", date.tzinfo
+        one_minute_from_now = utc.localize(datetime.utcnow() + timedelta(minutes=1))
+        if date < one_minute_from_now:
+            raise forms.ValidationError("The notification_time must be 1 min more than current time")
+        return date
 
     def schedule_notification(self):
         time = self.cleaned_data.pop('notification_time')
@@ -32,13 +33,7 @@ class NotificationForm(forms.Form):
 
 
 class ModifyNotificationForm(forms.Form):
-    """ Form for storing notificaiton details """
-
-    ACTIONS = (
-        ('reschedule', 'Reschedule',),
-        ('modify', 'Modify'),
-        ('remove', 'Remove'),
-    )
+    """ Form for modifying notifications."""
 
     action = forms.ChoiceField(choices=ACTIONS, widget=forms.RadioSelect)
     job_id = forms.CharField()
@@ -48,12 +43,12 @@ class ModifyNotificationForm(forms.Form):
     image_url = forms.URLField(required=False, widget=forms.URLInput)
     notification_time = forms.DateTimeField(required=False, widget=forms.DateTimeInput)
 
-    # def clean_notification_time(self):
-    #     date = self.cleaned_data['notification_time']
-    #     one_minute_from_now = utc.localize(datetime.utcnow() + timedelta(minutes=1))
-    #     if date < one_minute_from_now:
-    #         raise forms.ValidationError("The notification_time must be 1 min more than current time")
-    #     return date
+    def clean_notification_time(self):
+        date = self.cleaned_data['notification_time']
+        one_minute_from_now = utc.localize(datetime.utcnow() + timedelta(minutes=1))
+        if date < one_minute_from_now:
+            raise forms.ValidationError("The notification_time must be 1 min more than current time")
+        return date
 
     def modify(self):
         action = self.cleaned_data.pop('action')
