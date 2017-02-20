@@ -1,0 +1,14 @@
+.Python
+.idea /
+bin /
+data.txt
+db.sqlite3
+include /
+lib /
+logs /
+manage.py
+*.pyc
+*.orig
+pip-selfcheck.json
+src/migrations/
+
