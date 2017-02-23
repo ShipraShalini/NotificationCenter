@@ -8,6 +8,7 @@ from django.utils.translation import ugettext_lazy as _
 
 class UserManager(Manager):
     def get_notification_query(self, query):
+        "to get only fcm_id"
         new_query = list(query.partition('from'))
         new_query[0] = 'SELECT fcm_id '
         query = ''.join(new_query)
@@ -19,6 +20,7 @@ class UserManager(Manager):
 
 
 class User(Model):
+    "user model to be quried from"
     username_validator = UnicodeUsernameValidator()
     username = fields.CharField(
         _('username'),

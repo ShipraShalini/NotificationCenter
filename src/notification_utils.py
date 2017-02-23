@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime, timedelta
 
@@ -22,7 +23,7 @@ def add_notification(payload, query, time):
     """
     fcm_list = User.objects.get_notification_query(query)
     job_return = scheduler.add_job(send_notification, 'date', run_date=time, misfire_grace_time=300,
-                                   kwargs={'fcm_list': fcm_list, 'payload': payload})
+                                   kwargs={'fcm_list': fcm_list, 'payload': payload, 'query':query})
     return job_return.id
 
 
@@ -67,7 +68,7 @@ def remove_notification(job_id, **kwargs):
     return job_id, REMOVED
 
 
-def send_notification(fcm_list, payload):
+def send_notification(fcm_list, payload, query=None):
     """
     function to send notification to users
     :param query: fcm_ids of the users to whom the notification is to be sent
@@ -86,3 +87,22 @@ def is_valid_date(date):
     one_minute_from_now = pytz.utc.localize(datetime.utcnow() + timedelta(minutes=1))
     if date < one_minute_from_now:
         raise ValidationError("The notification_time must be 1 min more than current time")
+
+def get_notifications():
+    """
+    returns all the scheduled jobs
+    :return: list of jobs
+    """
+    retrieved_jobs = scheduler.get_jobs(jobstore='default')
+    jobs_list = []
+    for job in retrieved_jobs:
+        user_data = job.kwargs.get('payload', None)
+        user_data['query'] = job.kwargs.get('query', None)
+        job_data = {
+            "id": job.id,
+            "data": user_data ,
+            "notification_time": str(retrieved_jobs[0].next_run_time)
+        }
+        jobs_list.append(job_data)
+
+    return json.dumps(jobs_list)
