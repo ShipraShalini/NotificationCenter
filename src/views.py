@@ -13,6 +13,7 @@ class NotificationView(FormView):
         job_id = form.schedule_notification()
         return render_to_response("success.html", context={"job_id_scheduled": job_id})
 
+
 class ModifyNotificationView(FormView):
     template_name = 'notification_form.html'
     form_class = ModifyNotificationForm
@@ -23,4 +24,3 @@ class ModifyNotificationView(FormView):
         except JobLookupError as e:
             return render_to_response("error.html", context={"etype": e.__class__.__name__, "message": e.message})
         return render_to_response("success.html", context={"job_id_modified": job_id, "action": action})
-

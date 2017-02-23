@@ -1,26 +1,28 @@
-import json
 import logging
+from datetime import datetime, timedelta
 
 import pytz
-from datetime import datetime, timedelta
 from django.core.exceptions import ValidationError
 
 from src import scheduler
 from src.constants import *
+from src.gcmnotifications import FcmNotifications
+from src.models import User
 
 logger = logging.getLogger('notification')
 
 
-def add_notification(payload, user_ids, time):
+def add_notification(payload, query, time):
     """
     adds notification to the scheduler
-    :param payload: content of notification
-    :param user_ids: user_ids of the users to whom the notification is to be sent
+    :param payload: body of notification
+    :param query: SQL query to get the users to whom the notification is to be sent
     :param time: execution time of the notification
     :return: job_id
     """
+    fcm_list = User.objects.get_notification_query(query)
     job_return = scheduler.add_job(send_notification, 'date', run_date=time, misfire_grace_time=300,
-                                   kwargs={'user_ids': user_ids, 'payload': payload})
+                                   kwargs={'fcm_list': fcm_list, 'payload': payload})
     return job_return.id
 
 
@@ -37,24 +39,20 @@ def reschedule_notification(job_id, notification_time, **kwargs):
     return job_return.id, RESCHEDULED
 
 
-def modify_notification(job_id, user_ids, header, content, image_url, **kwargs):
+def modify_notification(job_id, payload, query, **kwargs):
     """
-    modifies the content of scheduled notification
+    modifies the body of scheduled notification
     :param job_id: job_id of the scheduled notification
-    :param user_ids: user_ids provided by user
-    :param header: header provided by user
-    :param content: content provided by user
+    :param query: SQL query to get the users to whom the notification is to be sent
+    :param title: title provided by user
+    :param body: body provided by user
     :param image_url: image_url provided by user
     :param kwargs: extra info provided by user
     :return: job id and action
     """
-    payload = {
-        "header": header,
-        "content": content,
-        "image_url": image_url,
-    }
+    fcm_list = User.objects.get_notification_query(query)
     job_return = scheduler.modify_job(job_id=job_id, jobstore='default',
-                                      kwargs={'user_ids': user_ids, 'payload': payload})
+                                      kwargs={'fcm_list': fcm_list, 'payload': payload})
     return job_return.id, MODIFIED
 
 
@@ -69,18 +67,14 @@ def remove_notification(job_id, **kwargs):
     return job_id, REMOVED
 
 
-def send_notification(user_ids, payload):
+def send_notification(fcm_list, payload):
     """
-    dummy function to send notification to users
-    :param user_ids: user_ids to be queried from db
+    function to send notification to users
+    :param query: fcm_ids of the users to whom the notification is to be sent
     :param payload: data for sendng notification
     :return: None
     """
-    data = {
-        "user_ids": user_ids,
-        "payload": payload
-    }
-    logger.info(json.dumps(data))
+    FcmNotifications().send(fcm_list=fcm_list, data=payload)
 
 
 def is_valid_date(date):

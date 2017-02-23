@@ -1,15 +1,20 @@
+import re
+
 from django import forms
+from django.core.exceptions import ValidationError
 
 from src import notification_utils
 from src.constants import ACTIONS
+
+regex = re.compile('^select', re.I)
 
 
 class NotificationForm(forms.Form):
     """ Form for storing notificaiton details """
 
-    user_ids = forms.CharField(max_length=300, label='Query')
-    header = forms.CharField(min_length=20, max_length=150)
-    content = forms.CharField(min_length=20, max_length=300, widget=forms.Textarea)
+    query = forms.CharField(max_length=300)
+    title = forms.CharField(min_length=20, max_length=150, label='Header')
+    body = forms.CharField(min_length=20, max_length=300, widget=forms.Textarea, label='Content')
     image_url = forms.URLField(widget=forms.URLInput)
     notification_time = forms.DateTimeField(widget=forms.DateTimeInput)
 
@@ -22,14 +27,24 @@ class NotificationForm(forms.Form):
         notification_utils.is_valid_date(date)
         return date
 
+    def clean_query(self):
+        """
+        validates date
+        :return: date
+        """
+        query = self.cleaned_data['query']
+        if not regex.match(query):
+            ValidationError("Only SELECT query is valid")
+        return query
+
     def schedule_notification(self):
         """
         schedules notifications
         :return: job_id
         """
         time = self.cleaned_data.pop('notification_time')
-        user_ids = self.cleaned_data.pop('user_ids')
-        return notification_utils.add_notification(payload=self.cleaned_data, user_ids=user_ids, time=time)
+        query = self.cleaned_data.pop('query')
+        return notification_utils.add_notification(payload=self.cleaned_data, query=query, time=time)
 
 
 class ModifyNotificationForm(forms.Form):
@@ -37,9 +52,9 @@ class ModifyNotificationForm(forms.Form):
 
     action = forms.ChoiceField(choices=ACTIONS, widget=forms.RadioSelect)
     job_id = forms.CharField()
-    user_ids = forms.CharField(max_length=300, required=False, label='Query')
-    header = forms.CharField(min_length=20, max_length=150, required=False)
-    content = forms.CharField(min_length=20, max_length=300, widget=forms.Textarea, required=False)
+    query = forms.CharField(max_length=300, required=False, label='Query')
+    title = forms.CharField(min_length=20, max_length=150, required=False, label='Header')
+    body = forms.CharField(min_length=20, max_length=300, widget=forms.Textarea, required=False, label='Content')
     image_url = forms.URLField(required=False, widget=forms.URLInput)
     notification_time = forms.DateTimeField(required=False, widget=forms.DateTimeInput)
 
@@ -52,6 +67,16 @@ class ModifyNotificationForm(forms.Form):
         if date:
             notification_utils.is_valid_date(date)
         return date
+
+    def clean_query(self):
+        """
+        validates date
+        :return: date
+        """
+        query = self.cleaned_data['query']
+        if not regex.match(query):
+            ValidationError("Only SELECT query is valid")
+        return query
 
     def modify(self):
         """

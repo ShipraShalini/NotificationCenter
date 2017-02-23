@@ -182,7 +182,7 @@ LOGGING = {
             'propagate': True,
         },
 
-    "apscheduler.executors.default": {
+        "apscheduler.executors.default": {
             'handlers': ['aps_file', 'console',],
             'level': 'INFO',
             'propagate': True,
@@ -210,3 +210,5 @@ APSCHEDULER_SETTINGS = {
         'tablename': 'notification_jobs'
     },
 }
+
+FCM_KEY = "Add FCM KEY here"
