@@ -22,6 +22,7 @@ def add_notification(payload, query, time):
     :return: job_id
     """
     fcm_list = User.objects.get_notification_query(query)
+    fcm_list = [item for fcm in fcm_list for item in fcm]
     job_return = scheduler.add_job(send_notification, 'date', run_date=time, misfire_grace_time=300,
                                    kwargs={'fcm_list': fcm_list, 'payload': payload, 'query':query})
     return job_return.id

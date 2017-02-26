@@ -33,7 +33,10 @@ class FcmNotifications(object):
         """
         data = self.create_payload(fcm_list=fcm_list, payload=payload)
         response = requests.post(self.FCM_URL, data=data, headers=self.HEADERS)
-        logger.info(data)
+        if 'Error 401' in response.content:
+            logger.error(response.content)
+        else:
+            logger.info(data)
         # return json.loads(response.content)['results']
 
     def send(self, fcm_list, data):
